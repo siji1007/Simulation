@@ -30,7 +30,7 @@ class MainWindow(tk.Tk):
         self.title_label = tk.Label(self.header_frame, text="Simulation", bg="#1B6E7A", fg="white", font=("Arial", 20))
         self.title_label.pack(side=tk.LEFT, padx=10, pady=10)
 
-        self.bg_image_close = PhotoImage(file="close.png")
+        self.bg_image_close = PhotoImage(file="images/close.png")
 
         # Exit button
         self.exit_button = tk.Button(self.header_frame, command=self.quit, image=self.bg_image_close, compound="center", border = 0)
@@ -66,8 +66,8 @@ class MainWindow(tk.Tk):
         self.bottom_Frame.grid_columnconfigure(1, weight=1)
         self.bottom_Frame.grid_columnconfigure(2, weight=2)
 
-        self.bg_image_reset = PhotoImage(file="Reset.png")
-        self.bg_image_simulate = PhotoImage(file="simulate.png")
+        self.bg_image_reset = PhotoImage(file="images/Reset.png")
+        self.bg_image_simulate = PhotoImage(file="images/simulate.png")
 
         # Create the reset button
         self.reset_button = tk.Button(self.bottom_Frame, command=self.reset, width=20, height=2, image=self.bg_image_reset, compound="center", border = 0)
