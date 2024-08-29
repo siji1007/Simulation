@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import PhotoImage
 import numpy as np
 import matplotlib
-matplotlib.use('Qt5Agg')  # Use 'Agg' if you want to save the plot to a file instead
+matplotlib.use('TkAgg')  # Use 'TkAgg' or 'Qt5Agg' depende sa compability
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
