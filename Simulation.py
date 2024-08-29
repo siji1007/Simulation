@@ -1,10 +1,51 @@
 import tkinter as tk
+
 from tkinter import PhotoImage, Toplevel, messagebox
+
+from tkinter import PhotoImage
+import numpy as np
+import matplotlib
+matplotlib.use('Qt5Agg')  # Use 'Agg' if you want to save the plot to a file instead
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.animation import FuncAnimation
+from scipy import integrate
+import sys
+
+alpha = 1.
+beta = 1.
+delta = 1.
+gamma = 1.
+x0 = 4.
+y0 = 2.
+
+def derivative(X, t, alpha, beta, delta, gamma):
+    x, y = X
+    dotx = x * (alpha - beta * y)
+    doty = y * (-delta + gamma * x)
+    return np.array([dotx, doty])
+
+def init_plot():
+    ax.set_xlim(0, tmax)
+    ax.set_ylim(0, 20)
+    return ln1, ln2
+
+def update_plot(frame):
+    t = np.linspace(0., tmax, Nt)
+    X0 = [x0, y0]
+    res = integrate.odeint(derivative, X0, t[:frame], args=(alpha, beta, delta, gamma))
+    x, y = res.T
+    ln1.set_data(t[:frame], x)
+    ln2.set_data(t[:frame], y)
+    return ln1, ln2
+
 
 class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.paused = True
+        self.simPress = 0
 
     def initUI(self):
         self.title("Simulation")
@@ -36,13 +77,39 @@ class MainWindow(tk.Tk):
         self.exit_button = tk.Button(self.header_frame, command=self.quit, image=self.bg_image_close, compound="center", border=0)
         self.exit_button.pack(side=tk.RIGHT, padx=10, pady=10)
 
+
         # Main frame
+
+        # Main frame, dito mo e store yun animation of predators and prey jelo
+
         self.main_frame = tk.Frame(self, bg="gray")
         self.main_frame.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=10, pady=10)
         self.main_frame.config(width=int(self.winfo_screenwidth() * 0.4))
 
+
         # Frames for graphs
         self.Fibonacci_Frame = tk.Frame(self, bg="gray")  # 1st graph
+
+        #I am not a king, I am not a god, I am ... Worst
+        global fig, ax, ln1, ln2, tmax, Nt
+        fig, ax = plt.subplots()
+        tmax = 50
+        Nt = 1000
+        ln1, = ax.plot([], [], 'xb', label='Prey (Sea Lion)')
+        ln2, = ax.plot([], [], '+r', label='Predator (Orca)')
+        ax.set_title("Lotka-Volterra Model")
+        ax.set_xlabel('Time [days]')
+        ax.set_ylabel('Population')
+        ax.grid()
+        ax.legend()
+
+        self.canvas = FigureCanvasTkAgg(fig, master=self.main_frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        #dito nyo lagay yung graph nyo
+        self.Fibonacci_Frame = tk.Frame(self, bg="gray")  #1st graph
+
         self.Fibonacci_Frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
 
         self.Ratio_Frame = tk.Frame(self, bg="gray")  # 2nd graph
@@ -51,7 +118,11 @@ class MainWindow(tk.Tk):
         self.Another_Frame_1 = tk.Frame(self, bg="gray")  # 3rd graph
         self.Another_Frame_1.grid(row=3, column=1, sticky="nsew", padx=10, pady=5)
 
+
         self.Another_Frame_2 = tk.Frame(self, bg="gray")  # 4th graph
+
+        self.Another_Frame_2 = tk.Frame(self, bg="gray")    #4th graph
+
         self.Another_Frame_2.grid(row=4, column=1, sticky="nsew", padx=10, pady=5)
 
         # Bottom frame for buttons
@@ -172,13 +243,21 @@ class MainWindow(tk.Tk):
             print(f"{name}: {self.entry_values[name]}")  # Print the value for debugging
         self.edit_window.destroy()
 
+
     def reset(self):
         # Add functionality for the reset button
         print("Reset button clicked")
 
     def simulate(self):
-        # Add functionality for the simulate button
-        print("Simulate button clicked")
+        if self.simPress < 1:
+            self.anim = FuncAnimation(fig, update_plot, init_func=init_plot, frames=Nt, interval=20, blit=True)
+            self.simPress += 1
+
+        if self.paused:
+            self.anim.event_source.start()
+        else:
+            self.anim.event_source.stop()
+        self.paused = not self.paused
 
 if __name__ == "__main__":
     app = MainWindow()
