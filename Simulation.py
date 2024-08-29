@@ -9,7 +9,7 @@ class MainWindow(tk.Tk):
     def initUI(self):
         self.title("Simulation")
         self.attributes('-fullscreen', True)  # Fullscreen mode
-        self.resizable(True, True)  # Disabling resizing
+        self.resizable(True, True)  # Enabling resizing
 
         # Configure grid columns and rows
         self.grid_columnconfigure(0, weight=2)  # Main frame column with more weight
@@ -21,42 +21,45 @@ class MainWindow(tk.Tk):
         self.grid_rowconfigure(4, weight=1)  # Row for right-side frames
         self.grid_rowconfigure(5, weight=0)  # Row for buttons
 
-        # Header frame with a height of 100 pixels
-        self.header_frame = tk.Frame(self, bg="#1B6E7A", height=100)
+        # Load the background image for the header
+        self.header_bg_image = PhotoImage(file="images/logo_bg.png")  
+
+        # Header frame with an image background
+        self.header_frame = tk.Frame(self, height=100)
         self.header_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
         self.header_frame.grid_propagate(False)  # Prevents the frame from resizing to fit its content
 
-        # Title label
-        self.title_label = tk.Label(self.header_frame, text="Simulation", bg="#1B6E7A", fg="white", font=("Arial", 20))
-        self.title_label.pack(side=tk.LEFT, padx=10, pady=10)
+        # Label to display the background image in the header frame
+        self.header_label = tk.Label(self.header_frame, image=self.header_bg_image)
+        self.header_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+
 
         self.bg_image_close = PhotoImage(file="images/close.png")
 
         # Exit button
-        self.exit_button = tk.Button(self.header_frame, command=self.quit, image=self.bg_image_close, compound="center", border = 0)
+        self.exit_button = tk.Button(self.header_frame, command=self.quit, image=self.bg_image_close, compound="center", border=0)
         self.exit_button.pack(side=tk.RIGHT, padx=10, pady=10)
 
-        # Main frame, dito mo e store yung animation of predators and prey jelo
+        # Main frame, where the animation of predators and prey will be stored
         self.main_frame = tk.Frame(self, bg="gray")
         self.main_frame.grid(row=1, column=0, rowspan=4, sticky="nsew", padx=10, pady=10)
-        self.main_frame.config(width=int(self.winfo_screenwidth() * 0.4))  
+        self.main_frame.config(width=int(self.winfo_screenwidth() * 0.4))
 
-       
-        #dito nyo lagay yung graph nyo 
-        self.Fibonacci_Frame = tk.Frame(self, bg="gray")  #1st graph
+        # Graph frames
+        self.Fibonacci_Frame = tk.Frame(self, bg="gray")  # 1st graph
         self.Fibonacci_Frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
 
-        self.Ratio_Frame = tk.Frame(self, bg="gray")        #2nd graph
+        self.Ratio_Frame = tk.Frame(self, bg="gray")  # 2nd graph
         self.Ratio_Frame.grid(row=2, column=1, sticky="nsew", padx=10, pady=5)
 
-        self.Another_Frame_1 = tk.Frame(self, bg="gray")    #3rd graph
+        self.Another_Frame_1 = tk.Frame(self, bg="gray")  # 3rd graph
         self.Another_Frame_1.grid(row=3, column=1, sticky="nsew", padx=10, pady=5)
 
-        self.Another_Frame_2 = tk.Frame(self, bg="gray")    #4th graph 
+        self.Another_Frame_2 = tk.Frame(self, bg="gray")  # 4th graph 
         self.Another_Frame_2.grid(row=4, column=1, sticky="nsew", padx=10, pady=5)
 
-        #Bagohin nyo nlng yung yung variable depende sa graph na ilalagay
-
+        # Bottom frame
         self.bottom_Frame = tk.Frame(self)
         self.bottom_Frame.grid(row=5, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
 
@@ -70,13 +73,14 @@ class MainWindow(tk.Tk):
         self.bg_image_simulate = PhotoImage(file="images/simulate.png")
 
         # Create the reset button
-        self.reset_button = tk.Button(self.bottom_Frame, command=self.reset, width=20, height=2, image=self.bg_image_reset, compound="center", border = 0)
+        self.reset_button = tk.Button(self.bottom_Frame, command=self.reset, width=20, height=2, image=self.bg_image_reset, compound="center", border=0)
         self.reset_button.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         # Create the simulate button
-        self.simulate_button = tk.Button(self.bottom_Frame, command=self.simulate, width=20, height=2, image=self.bg_image_simulate, compound="center", border= 0)
-        self.simulate_button.grid(row=0, column=1, sticky="nsew", padx=5, pady=5 )
+        self.simulate_button = tk.Button(self.bottom_Frame, command=self.simulate, width=20, height=2, image=self.bg_image_simulate, compound="center", border=0)
+        self.simulate_button.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
+        # Right-bottom frame
         self.right_bottom_Frame = tk.Frame(self.bottom_Frame, bg="lightblue")
         self.right_bottom_Frame.grid(row=0, column=2, sticky="nsew", padx=10, pady=5)
 
@@ -88,7 +92,6 @@ class MainWindow(tk.Tk):
         self.right_bottom_Frame.grid_columnconfigure(1, weight=2)  # Column for entries
 
         # Create labels and entries inside right_bottom_Frame
-
         self.entry1_label = tk.Label(self.right_bottom_Frame, text="Entry 1", bg="gray", fg="white", font=("Arial", 10))
         self.entry1_label.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
@@ -116,7 +119,6 @@ class MainWindow(tk.Tk):
         self.grid_rowconfigure(2, weight=1)
         self.grid_rowconfigure(3, weight=1)
         self.grid_rowconfigure(4, weight=1)
-
 
     def reset(self):
         # Add functionality for the reset button
