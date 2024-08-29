@@ -8,6 +8,24 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 from scipy import integrate
+from scipy.integrate import odeint
+
+class LotkaVolterraModel:
+    def __init__(self, alpha, beta, delta, gamma):
+        self.alpha = alpha
+        self.beta = beta
+        self.delta = delta
+        self.gamma = gamma
+
+    def equations(self, z, t):
+        x, y = z
+        dxdt = self.alpha * x - self.beta * x * y
+        dydt = self.delta * x * y - self.gamma * y
+        return [dxdt, dydt]
+
+    def solve(self, x0, y0, t):
+        z0 = [x0, y0]
+        return odeint(self.equations, z0, t)
 
 class MainWindow(tk.Tk):
     def __init__(self):
@@ -29,6 +47,22 @@ class MainWindow(tk.Tk):
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.main_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Scatter
+        self.fig2, self.ax2 = plt.subplots()
+        self.ax2.set_title('Lotka-Volterra Model')
+        self.ax2.set_xlabel('Prey Population')
+        self.ax2.set_ylabel('Predator Population')
+        self.scatter, = self.ax2.plot([], [], 'g.', label='Prey vs. Predator')
+        self.ax2.set_title('Lotka-Volterra Model Scatter')
+        self.ax2.set_xlabel('Prey Population')
+        self.ax2.set_ylabel('Predator Population')
+        self.ax2.grid()
+        self.ax2.legend()
+
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.Fibonacci_Frame)
+        self.canvas2.draw()
+        self.canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
         # Set default values for simulation parameters
         self.reset_values()
@@ -66,6 +100,7 @@ class MainWindow(tk.Tk):
         self.Fibonacci_Frame = tk.Frame(self, bg="gray")  #1st graph
         self.Fibonacci_Frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
 
+        """
         self.Ratio_Frame = tk.Frame(self, bg="gray")        #2nd graph
         self.Ratio_Frame.grid(row=2, column=1, sticky="nsew", padx=10, pady=5)
 
@@ -74,6 +109,7 @@ class MainWindow(tk.Tk):
 
         self.Another_Frame_2 = tk.Frame(self, bg="gray")    #4th graph
         self.Another_Frame_2.grid(row=4, column=1, sticky="nsew", padx=10, pady=5)
+        """
 
 
         self.bottom_Frame = tk.Frame(self)
@@ -86,7 +122,7 @@ class MainWindow(tk.Tk):
         self.bg_image_reset = PhotoImage(file="images/Reset.png")
         self.bg_image_simulate = PhotoImage(file="images/simulate.png")
 
-        self.reset_button = tk.Button(self.bottom_Frame, command=self.reset, width=20, height=7, image=self.bg_image_reset, compound="center", border=0)
+        self.reset_button = tk.Button(self.bottom_Frame, command=self.hard_reset, width=20, height=7, image=self.bg_image_reset, compound="center", border=0)
         self.reset_button.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         self.simulate_button = tk.Button(self.bottom_Frame, command=self.simulate, width=20, height=7, image=self.bg_image_simulate, compound="center", border=0)
@@ -100,14 +136,11 @@ class MainWindow(tk.Tk):
 
     #for entries
     def open_edit_window(self):
-        try:
-            self.anim.event_source.stop()
-        except:
-            pass
         self.edit_window = Toplevel(self)
         self.edit_window.title("Edit Entries")
         self.edit_window.geometry("450x400")
         self.edit_window.transient(self)
+        self.edit_window.update_idletasks()
         self.edit_window.grab_set()
         self.edit_window.lift()
 
@@ -130,12 +163,12 @@ class MainWindow(tk.Tk):
             entry.insert(0, self.entry_values.get(name, "0"))
             self.entries[name] = entry
 
-        save_button = tk.Button(self.edit_window, text="Save", command=self.save_entries)
+        save_button = tk.Button(self.edit_window, text="Save", command=lambda: [self.save_entries(), self.reset()])
         save_button.grid(row=len(entry_names), column=0, padx=10, pady=10)
 
-
-        cancel_button = tk.Button(self.edit_window, text="Cancel", command=lambda: [self.edit_window.destroy(), self.anim.event_source.start()])
+        cancel_button = tk.Button(self.edit_window, text="Cancel", command=lambda: [self.edit_window.destroy()])
         cancel_button.grid(row=len(entry_names), column=1, padx=10, pady=10)
+
 
     def validate_numeric(self, value):
         if value == "":
@@ -169,17 +202,37 @@ class MainWindow(tk.Tk):
         self.Nt = self.entry_values.get("Number of Time Steps (Nt)", 1000)
 
         self.edit_window.destroy()
-        self.anim.event_source.start()
+
+    def hard_reset(self):
+        # Stop the animation if it's running
+        if hasattr(self, 'anim') and self.anim.event_source is not None:
+            self.anim.event_source.stop()
+
+        if hasattr(self, 'anim_scatter') and self.anim_scatter.event_source is not None:
+            self.anim_scatter.event_source.stop()
+
+        self.reset_values()
+        self.refresh()
+
+        # Reinitialize the simulation parameters
+        self.simPress = 0  # Ensure simulate button starts fresh
+        self.paused = True  # Ensure simulation is paused initially
 
     def reset(self):
         # Stop the animation if it's running
         if hasattr(self, 'anim') and self.anim.event_source is not None:
             self.anim.event_source.stop()
 
-        # Reset values to default
-        self.reset_values()
+        if hasattr(self, 'anim_scatter') and self.anim_scatter.event_source is not None:
+            self.anim_scatter.event_source.stop()
 
-        # Clear and reset the plot
+        self.refresh()
+
+        # Reinitialize the simulation parameters
+        self.simPress = 0  # Ensure simulate button starts fresh
+        self.paused = True  # Ensure simulation is paused initially
+
+    def refresh(self):
         self.ax.clear()
         self.ln1, = self.ax.plot([], [], 'xb', label='Prey (Sea Lion)')
         self.ln2, = self.ax.plot([], [], '+r', label='Predator (Orca)')
@@ -190,10 +243,14 @@ class MainWindow(tk.Tk):
         self.ax.legend()
         self.canvas.draw()
 
-        # Reinitialize the simulation parameters
-        self.simPress = 0  # Ensure simulate button starts fresh
-        self.paused = True  # Ensure simulation is paused initially
-
+        self.ax2.clear()
+        self.scatter, = self.ax2.plot([], [], 'g.', label='Prey vs. Predator')
+        self.ax2.set_title('Lotka-Volterra Model Scatter')
+        self.ax2.set_xlabel('Prey Population')
+        self.ax2.set_ylabel('Predator Population')
+        self.ax2.grid()
+        self.ax2.legend()
+        self.canvas2.draw()
 
     def reset_values(self):
         self.entry_values = {
@@ -212,11 +269,14 @@ class MainWindow(tk.Tk):
     def simulate(self):
         if self.simPress < 1:
             self.anim = FuncAnimation(self.fig, self.update_plot, init_func=self.init_plot, frames=self.Nt, interval=20, blit=True)
+            self.anim_scatter = FuncAnimation(self.fig2, self.animate_scatter, init_func=self.init_scatter, frames=self.Nt, interval=20, blit=True)
             self.simPress += 1
         if self.paused:
             self.anim.event_source.start()
+            self.anim_scatter.event_source.start()
         else:
             self.anim.event_source.stop()
+            self.anim_scatter.event_source.stop()
         self.paused = not self.paused
 
     def init_plot(self):
@@ -251,6 +311,36 @@ class MainWindow(tk.Tk):
         self.ax.set_ylim(0, max(max(sol.y[0, :]), max(sol.y[1, :])) + 10)
 
         return self.ln1, self.ln2
+
+    def update_scatter(self):
+        alpha = self.entry_values["Prey Growth Rate (alpha)"]
+        beta = self.entry_values["Predation Rate (beta)"]
+        delta = self.entry_values["Predator Growth Rate (delta)"]
+        gamma = self.entry_values["Predator Consumption Rate (gamma)"]
+        x0 = self.entry_values["Initial Population Prey (x0)"]
+        y0 = self.entry_values["Initial Population Predator (y0)"]
+
+        t = np.linspace(0, self.tmax, self.Nt)
+        model = LotkaVolterraModel(alpha, beta, delta, gamma)
+        result = model.solve(x0, y0, t)
+        self.x_data, self.y_data = result[:, 0], result[:, 1]
+        self.canvas2.draw()
+
+    def init_scatter(self):
+        self.scatter.set_data([], [])
+        return self.scatter,
+
+    def animate_scatter(self, frame):
+        self.update_scatter()
+        self.scatter.set_data(self.x_data[:frame], self.y_data[:frame])
+        self.ax2.set_xlim(min(self.x_data), max(self.x_data) + 20)
+        self.ax2.set_ylim(min(self.y_data), max(self.y_data) + 20)
+
+        if frame == self.Nt - 1:
+            self.anim_scatter.event_source.stop()
+
+        return self.scatter,
+
 
 if __name__ == "__main__":
     app = MainWindow()
